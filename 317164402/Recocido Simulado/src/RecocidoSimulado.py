@@ -11,12 +11,12 @@ class RecocidoSimulado:
     lim_Inf = 0
     lim_Sup = 0
     numIters = 0
-    temperatura = 1000
+    temperatura = 400
     #temperatura = 100
     temperaturainicial = 0
     solucion = []
     fitnessActual = 0
-    alpha = 0.95
+    alpha = 0.8
     #alpha = 0.7
     fitnessPorGeneracion = []
     entraProb = 0
@@ -32,12 +32,17 @@ class RecocidoSimulado:
     '''
     def inicializaSolucion(self, nBits, dim, funcionDeOptimizacion):
         self.nBits  = nBits
-        self.dim = dim       
+        if(dim ==1):
+            self.dim = 1
+        else:
+            self.dim = dim -1
+        print("Dimension; ",self.dim)       
         self.funcionDeOptimizacion = funcionDeOptimizacion
         self.temperaturainicial = self.temperatura
-        self.solucion= self.inicializa()
-        print(self.solucion)
         if(funcionDeOptimizacion ==1):
+            self.lim_Inf = -5.12
+            self.lim_Sup = 5.12
+            self.solucion = self.inicializa()      
             print("Se usará Sphere \n")
             sol1 = self.decodifica_aux(self.solucion)
             sol = [0]
@@ -45,13 +50,18 @@ class RecocidoSimulado:
             self.fitnessActual = self.sphere(sol)
         if(funcionDeOptimizacion ==2):
             print("Se usará Ackley")
+            self.lim_Inf = -30
+            self.lim_Sup = 30
+            self.solucion = self.inicializa()      
             sol1 = self.decodifica_aux(self.solucion)
             sol = [0]
             sol[0] = sol1
             self.fitnessActual = self.ackley(np.array(sol))
-
         if(funcionDeOptimizacion == 3):
             print("Griewank")
+            self.lim_Inf = -600
+            self.lim_Sup = 600
+            self.solucion = self.inicializa()      
             sol1 = self.decodifica_aux(self.solucion)
             sol = [0]
             sol[0] = sol1
@@ -59,13 +69,19 @@ class RecocidoSimulado:
 
         if(funcionDeOptimizacion ==4):
             print("Se usará rastrigin")
+            self.lim_Inf = -5.12
+            self.lim_Sup = 5.12
+            self.solucion = self.inicializa()      
             sol1 = self.decodifica_aux(self.solucion)
             sol = [0]
             sol[0] = sol1
             self.fitnessActual = self.rastrigin(np.array(sol))
 
         if(funcionDeOptimizacion == 5):
-            print("Se usará     ")
+            print("Se usará Rosenbrock")
+            self.lim_Inf = -2.04
+            self.lim_Sup = 2.04
+            self.solucion = self.inicializa()      
             sol1 = self.decodifica_aux(self.solucion)
             sol = [0]
             sol1 = self.deletePoint(str(sol1))
@@ -83,10 +99,29 @@ class RecocidoSimulado:
      * @return una solución inicial
     '''
     def inicializa(self):
-        pob = np.zeros(self.nBits)
-        for i in range(self.nBits):
-            pob[i] = random.randint(0,1)
+        pob = []
+        s =0
+        while(s < self.dim):
+            ini = []    
+            for i in range(self.nBits):
+                ini.append(random.randint(0,1))
+            if(self.decodifica_aux1Dim(ini)>self.lim_Sup):
+                print("Más grande que el  límite superior")
+            else: 
+                pob.append(ini)
+                s+=1
+        print("pob: ",pob)
         return pob
+    '''
+     * Convierte un número binario a decimal.
+     * @param binario un arreglo de un número en binario
+    '''
+    def decodifica_aux1Dim(self, binario):
+        n = 0
+        for bit in binario:
+            n = n * 2 + bit
+        return n
+    
     '''
      * Realiza el enfriamiento lineal
      * Multiplica la temperatura actual por el decamento 
@@ -100,9 +135,10 @@ class RecocidoSimulado:
      * como candidato
     '''
     def generaCandidato(self):
-        candidato = np.copy(self.solucion)
-        indiceAl = random.randint(0, len(candidato)-1)
-        candidato[indiceAl] = 1-candidato[indiceAl]
+        candidato = self.solucion
+        print("Candidado en genera:", candidato)
+        indiceAl = random.randint(0, len(candidato[0])-1)
+        candidato[0][indiceAl] = 1-candidato[0][indiceAl]
         return candidato
     
     '''
@@ -118,13 +154,12 @@ class RecocidoSimulado:
             self.fitnessActual = fitnessCandidato
         else:
             exponente = self.fitnessActual- fitnessCandidato
-            probabilidad1 = (exponente/self.temperatura)
+            probabilidad1 = (-exponente/self.temperatura)
             print("Exponente: ",exponente, "Temp:", self.temperatura, "Probabildidad 1: ",probabilidad1)
             probabilidad = np.exp(probabilidad1)
-
             r = random.uniform(0, 1)
             print("proba: ", probabilidad," r: ",r)
-            if r < probabilidad:
+            if probabilidad > r:
                 self.entraProb+=1
                 print("entre a la proba, se cambia")
                 self.solucion =  candidato
@@ -187,10 +222,14 @@ class RecocidoSimulado:
      * @param binario un arreglo de un número en binario
     '''
     def decodifica_aux(self, binario):
-        n = 0
-        for bit in binario:
-            n = n * 2 + bit
-        return n
+        binar = []
+        for i in range(self.dim):
+            n = 0
+            for k in range(self.nBits):
+                n = n * 2 + binario[i][k]
+            binar.append(n)
+        print(binar)
+        return binar
     
 
     '''
@@ -244,25 +283,38 @@ class RecocidoSimulado:
         print("x:", x)
         print("y",y)
         plt.plot(x, y)
-        plt.xlabel('Ejecuciones')
+        plt.xlabel('Iteraciones')
         plt.ylabel('Fitness')
-        plt.title('Fitness por generación')
+        plt.title('Fitness por iteración')
         plt.show()
 
 def main():
-    alg = RecocidoSimulado()
-    n = 10
-    alg.inicializaSolucion(10,2,1)
-    alg.fitnessPorGeneracion.append(alg.fitnessActual)
-    print("fitness inicial: ", alg.fitnessActual)
-    for i in range(n):
-        alg.recocidoSimulado()
-        alg.enfriamientoLineal(i)
-        print("Fitness en generacion ",i,": ",alg.fitnessActual)
-    print("Fitness por generaciones: ", alg.fitnessPorGeneracion)    
-    alg.plot(n+1)
-    sorted = np.sort(alg.fitnessPorGeneracion)
-    print("Mejor resultado = ",sorted[len(sorted)-1])
+    n = 500
+    resultadosFinales = []
+    for i in range(1):
+        alg = RecocidoSimulado()
+        alg.solucion = []
+        alg.fitnessPorGeneracion = []
+        alg.inicializaSolucion(10,10,3)
+        alg.fitnessPorGeneracion.append(alg.fitnessActual)
+        print("fitness inicial: ", alg.fitnessActual)
+        for i in range(n):
+            alg.recocidoSimulado()
+            alg.enfriamientoLineal(i)
+            print("Fitness en generacion ",i,": ",alg.fitnessActual)
+        print("Fitness por generaciones: ", alg.fitnessPorGeneracion)    
+        alg.plot(n+1)
+        sorted = np.sort(alg.fitnessPorGeneracion)
+        print("Mejor resultado = ",sorted[len(sorted)-1])
+        resultadosFinales.append(sorted[len(sorted)-1])
+    print("Resultados finales: ",resultadosFinales)
+    x = np.arange(0,20,1)
+    print("x:", x)
+    plt.plot(x, resultadosFinales)
+    plt.xlabel('Ejecuciones')
+    plt.ylabel('Fitness por ejecución')
+    plt.title('Mejor fitness por ejecución')
+    plt.show()
 if __name__ == '__main__':
     main()
     

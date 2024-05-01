@@ -34,12 +34,17 @@ class AlgoritmoGenetico():
         self.funcionDeOptimizacion = funcionDeOptimizacion
         self.nBits  = nBits
         self.tamPob = tamPob
-        self.dim = dim
+        if(dim ==1):
+            self.dim = 1
+        else:
+            self.dim = dim -1
         self.fitnessPorSolucion = np.zeros(self.tamPob)
-        for i in range(tamPob):
-            self.poblacion.append(self.inicializaSolucion())
-        print(self.poblacion)
         if(funcionDeOptimizacion ==1):
+            self.lim_Inf = -5.12
+            self.lim_Sup = 5.12
+            for i in range(tamPob):
+                self.poblacion.append(self.inicializaSolucion())
+            print("poblacion: ",self.poblacion)
             print("Se usará Sphere \n")
             for i in range(self.tamPob):
                 sol1 = self.decodifica_aux(self.poblacion[i])
@@ -48,6 +53,11 @@ class AlgoritmoGenetico():
                 self.fitnessPorSolucion[i] = self.sphere(sol)
         if(funcionDeOptimizacion ==2):
             print("Se usará Ackley")
+            self.lim_Inf = -30
+            self.lim_Sup = 30
+            for i in range(tamPob):
+                self.poblacion.append(self.inicializaSolucion())
+            print("poblacion: ",self.poblacion)
             for i in range(self.tamPob):
                 sol1 = self.decodifica_aux(self.poblacion[i])
                 sol = [0]
@@ -55,27 +65,42 @@ class AlgoritmoGenetico():
                 self.fitnessPorSolucion[i] = self.ackley(np.array(sol))
         if(funcionDeOptimizacion == 3):
             print("Griewank")
+            self.lim_Inf = -600
+            self.lim_Sup = 600
+            for i in range(tamPob):
+                self.poblacion.append(self.inicializaSolucion())
+            print("poblacion: ",self.poblacion)
             for i in range(self.tamPob):
+                print("poblacion en i:",self.poblacion[i])
                 sol1 = self.decodifica_aux(self.poblacion[i])
                 sol = [0]
                 sol[0] = sol1
                 self.fitnessPorSolucion[i] = self.griewank(np.array(sol))
         if(funcionDeOptimizacion ==4):
             print("Se usará rastrigin")
+            self.lim_Inf = -5.12
+            self.lim_Sup = 5.12
+            for i in range(tamPob):
+                self.poblacion.append(self.inicializaSolucion())
+            print("poblacion: ",self.poblacion)
             for i in range(self.tamPob):
                 sol1 = self.decodifica_aux(self.poblacion[i])
                 sol = [0]
                 sol[0] = sol1
                 self.fitnessPorSolucion[i] = self.rastrigin(np.array(sol))
         if(funcionDeOptimizacion == 5):
-            print("Se usará     ")
+            print("Se usará Rosenbrock")
+            self.lim_Inf = -2.04
+            self.lim_Sup = 2.04
+            for i in range(tamPob):
+                self.poblacion.append(self.inicializaSolucion())
+            print("poblacion: ",self.poblacion)
             for i in range(self.tamPob):
+                print(i)
                 sol1 = self.decodifica_aux(self.poblacion[i])
                 sol = [0]
-                sol1 = self.deletePoint(str(sol1))
-                sol1 = "."+str(sol1)
-                sol1 = float(sol1)
                 sol[0] = sol1
+                print("Valor:" ,sol)
                 self.fitnessPorSolucion[i] = self.rosenbrock(np.array(sol))
         print("poblacion inicial: ")
         print(self.poblacion)
@@ -84,6 +109,22 @@ class AlgoritmoGenetico():
         #Da el indice de la mejor solucion     
         self.mejorsolucion = int(np.argsort(self.fitnessPorSolucion)[len(self.fitnessPorSolucion)-1])
         print("Mejor solucion: ", self.mejorsolucion)
+
+    '''
+     * Inicializa una solución dando puntos al azar del tamaño de nbits.
+     * @return una solución inicial
+    '''
+    def inicializaSolucion(self):
+        pob = []
+        s =0
+        while(s < self.dim):
+            ini = []    
+            for i in range(self.nBits):
+                ini.append(random.randint(0,1))
+            pob.append(ini)
+            s+=1
+        
+        return pob
 
     '''
      * Elimina el punto decimal de un número double.
@@ -100,6 +141,20 @@ class AlgoritmoGenetico():
      * @param binario un arreglo de un número en binario
     '''
     def decodifica_aux(self, binario):
+        binar = []
+        for i in range(self.dim):
+            n = 0
+            for k in range(self.nBits):
+                n = n * 2 + binario[i][k]
+            binar.append(n)
+        print(binar)
+        return binar
+    
+    '''
+     * Convierte un número binario a decimal.
+     * @param binario un arreglo de un número en binario
+    '''
+    def decodifica_aux1Dim(self, binario):
         n = 0
         for bit in binario:
             n = n * 2 + bit
@@ -125,8 +180,8 @@ class AlgoritmoGenetico():
     def operadorDeCruza(self, padres, n):
         prob = random.random()
         resultado = []
-        resultado.append(self.poblacion[padres[0]])
-        resultado.append(self.poblacion[padres[1]])
+        resultado.append(self.poblacion[padres[0]][0])
+        resultado.append(self.poblacion[padres[1]][1])
         if(prob< 0.75):
             print("Entre a la proba")
             padre1 = self.poblacion[padres[0]]
@@ -135,8 +190,8 @@ class AlgoritmoGenetico():
             padre2 = self.poblacion[padres[1]]
             print("Padre 2")
             print(padre2)
-            offspring1 = np.copy(padre1)
-            offspring2 = np.copy(padre2)
+            offspring1 = np.copy(padre1[0])
+            offspring2 = np.copy(padre2[0])
             indicesRandom = np.zeros(n)
             # tendrá los valores pero se irán eliminando
             for i in range(n):
@@ -151,23 +206,23 @@ class AlgoritmoGenetico():
                 if(long == len(indicesRandom)):
                     k = 0
                     while(k <=  int(indicesRandom[0])):
-                        offspring1[k] = padre2[k]
-                        offspring2[k] = padre1[k]
+                        offspring1[k] = padre2[0][k]
+                        offspring2[k] = padre1[0][k]
                         k+=1
                     indicesRandom = np.delete(indicesRandom,0)
                 else:
                     if(len(indicesRandom)>1):
                         for i in range(int(indicesRandom[1])- int(indicesRandom[0])):
-                            offspring1[int(indicesRandom[0])+i] = padre2[int(indicesRandom[0])+i]
-                            offspring2[int(indicesRandom[0])+i] = padre1[int(indicesRandom[0])+i]
+                            offspring1[int(indicesRandom[0])+i] = padre2[0][int(indicesRandom[0])+i]
+                            offspring2[int(indicesRandom[0])+i] = padre1[0][int(indicesRandom[0])+i]
                         indicesRandom = np.delete(indicesRandom,0)
                         indicesRandom = np.delete(indicesRandom,0)
                     else:
                         i = 0
                         ind = int(indicesRandom[0])-1
                         while((i+int(indicesRandom[0]))<=len(padre1)):
-                            offspring1[ind+i] = padre2[ind+i]
-                            offspring2[ind+i] = padre1[ind+i]
+                            offspring1[ind+i] = padre2[0][ind+i]
+                            offspring2[ind+i] = padre1[0][ind+i]
                             i+=1
 
                         indicesRandom = np.delete(indicesRandom,0)
@@ -184,6 +239,7 @@ class AlgoritmoGenetico():
 
         else:
             print("no se realizó operación de cruza debido a que a probabilidad que se obtuvo: ", prob," es mas alta que .75")
+            print("resultado: ", resultado)
         return resultado
 
     '''
@@ -223,24 +279,25 @@ class AlgoritmoGenetico():
                     m +=1
                 i = i+1
             print("nueva poblacion: ",nuevaPoblacion)
-            self.poblacion = nuevaPoblacion
+            self.poblacion[0] = nuevaPoblacion
             self.fitnessPorSolucion = self.calculaNuevoFitness(nuevaPoblacion)
             print("Nuevo fitness:", self.fitnessPorSolucion)
-            return nuevaPoblacion
+        return nuevaPoblacion
         
     '''
      * Se reemplazaran las soluciones con peor fitness por los nuevos resultados
      * @param hijos los nuevos hijos
     '''
     def reemplazoDeLosPeores(self, hijos):
-        nuevaPoblacion = np.copy(self.poblacion)
+        nuevaPoblacion = self.poblacion.copy()
         if(hijos!= []):
             fitnessOrdenado = np.argsort(self.fitnessPorSolucion)
-            nuevaPoblacion[fitnessOrdenado[0]] = hijos[0]
-            nuevaPoblacion[fitnessOrdenado[1]] = hijos[1]
+            nuevaPoblacion[fitnessOrdenado[0]][0] = hijos[0]
+            nuevaPoblacion[fitnessOrdenado[1]][1] = hijos[1]
             self.poblacion = nuevaPoblacion
+            print("nueva poblacion:", self.poblacion)
             self.fitnessPorSolucion = self.calculaNuevoFitness(nuevaPoblacion)
-            return nuevaPoblacion
+        return nuevaPoblacion
 
     '''
      * Función Ackley para un conjunto de puntos x
@@ -271,7 +328,8 @@ class AlgoritmoGenetico():
      * @param x una liasta de puntos x
     '''
     def rastrigin(self,x):
-        return 10 * len(x) + np.sum(np.square(x) - 10 * np.cos(2 * np.pi * x))
+        return np.sum(10 * len(x) + np.sum(np.square(x) - 10 * np.cos(2 * np.pi * x)))
+
     '''
      * Función Rosenbrock para un conjunto de puntos x
      * @param x una liasta de puntos x
@@ -280,18 +338,10 @@ class AlgoritmoGenetico():
         a = 1
         b = 100
         y = 1  
-        valor= (a - x)**2 + b * (y - x**2)**2
+        valor = np.sum((a - x)**2 + b * (y - x**2)**2)
         print("Fitness", valor)
         return valor
-    '''
-     * Inicializa una solución dando puntos al azar del tamaño de nbits.
-     * @return una solución inicial
-    '''
-    def inicializaSolucion(self):
-        pob = np.zeros(self.nBits)
-        for i in range(self.nBits):
-            pob[i] = random.randint(0,1)
-        return pob
+
     '''
      * Calcula un fitness para una población nueva dependiendo de la función de optimización
      * @param lista la poblacipon inicial
@@ -324,16 +374,11 @@ class AlgoritmoGenetico():
                 resultado[i] = self.rastrigin(np.array(sol))
         if(self.funcionDeOptimizacion == 5):
             for i in range(self.tamPob):
-                sol1 = self.decodifica_aux(lista[i])
+                sol1 = self.decodifica_aux(self.poblacion[i])
                 sol = [0]
-                print("Numero:" , sol1)
-                sol1 = self.deletePoint(str(sol1))
-                print(sol1)
-                sol1 = "."+str(sol1)
-                sol1 = float(sol1)
-                print(sol1)
                 sol[0] = sol1
-                resultado[i] = self.rosenbrock(np.array(sol))
+                print("Valor:" ,sol)
+                self.fitnessPorSolucion[i] = self.rosenbrock(np.array(sol))
         return resultado
     '''
      * Grafica los mejores resultados por generación
@@ -362,22 +407,26 @@ class AlgoritmoGenetico():
 
 def main():
     alg = AlgoritmoGenetico()
-    n = 30
-    alg.mejorFitnesPorGeneracion = np.zeros(n)
-    alg.inicializaPoblacion(10,10,2,1)
-    # Ejecuta el algoritmo n veces.
-    for i in range(n):
-        indices = alg.seleccionDeRuleta()
-        offsprings = alg.operadorDeCruza(indices,4)
-        # Nueva poblacion para la sigueinte generacion
-        alg.reemplazoDeLosPeores(offsprings)
-        alg.mejorFitnesPorGeneracion[i] = float(alg.fitnessPorSolucion[alg.mejorsolucion])
-        print("Mejor solucion en iteracion : ",i, ": ", alg.mejorFitnesPorGeneracion[i])
-    print("Mejor solucion: ",alg.poblacion[alg.mejorsolucion], "Fitness: ", alg.fitnessPorSolucion[alg.mejorsolucion])
-    alg.tabula(n)
-    alg.plot(n)
-
-        
+    n = 500
+    resultadosFinales = []
+    for i in range(1):
+        alg = AlgoritmoGenetico()
+        alg.poblacion = []
+        alg.mejorFitnesPorGeneracion = np.zeros(n)
+        alg.inicializaPoblacion(3,10,10,3)
+        # Ejecuta el algoritmo n veces.
+        for i in range(n):
+            indices = alg.seleccionDeRuleta()
+            offsprings = alg.operadorDeCruza(indices,3)
+            # Nueva poblacion para la sigueinte generacion
+            alg.reemplazoDeLosPeores(offsprings)
+            alg.mejorFitnesPorGeneracion[i] = float(alg.fitnessPorSolucion[alg.mejorsolucion])
+            print("Mejor solucion en iteracion : ",i, ": ", alg.mejorFitnesPorGeneracion[i])
+        print("Mejor solucion: ",alg.poblacion[alg.mejorsolucion], "Fitness: ", alg.fitnessPorSolucion[alg.mejorsolucion])
+        resultadosFinales.append((alg.poblacion[alg.mejorsolucion], alg.fitnessPorSolucion[alg.mejorsolucion]))
+        alg.tabula(n)
+        alg.plot(n)
+    print(resultadosFinales)       
 
 if __name__ == '__main__':
     main()
